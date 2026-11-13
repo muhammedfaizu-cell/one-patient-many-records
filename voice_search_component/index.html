@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+* { box-sizing: border-box; }
+body { margin: 0; font-family: system-ui, sans-serif; background: transparent; color: #174f49; }
+button { width: 52px; height: 52px; display: grid; place-items: center; border: 1px solid #b9d9d2; border-radius: 14px; background: #eef8f5; color: #117c72; cursor: pointer; transition: .15s ease; }
+button:hover { background: #dff1ec; border-color: #83bdb3; }
+button:focus-visible { outline: 3px solid #69bdb0; outline-offset: 2px; }
+button.listening { color: #fff; background: #c73d48; border-color: #c73d48; animation: pulse 1.2s infinite; }
+svg { width: 23px; height: 23px; }
+#status { margin-top: 3px; width: 52px; font-size: 10px; text-align: center; color: #526a75; white-space: nowrap; }
+@keyframes pulse { 50% { box-shadow: 0 0 0 6px rgba(199,61,72,.16); } }
+</style>
+</head>
+<body>
+<button id="mic" type="button" aria-label="Start voice search" title="Start voice search">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"></rect><path d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v3M8 22h8"></path></svg>
+</button>
+<div id="status" aria-live="polite">Voice search</div>
+<script>
+const button = document.getElementById("mic");
+const status = document.getElementById("status");
+let activeRecognition = null;
+function putTranscriptInQuestion(transcript) {
+  const question = window.parent.document.querySelector('input[aria-label="Question"]');
+  if (!question) throw new Error("Question field is not available");
+  const setter = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(question), "value").set;
+  setter.call(question, transcript);
+  const EventConstructor = question.ownerDocument.defaultView.Event;
+  question.dispatchEvent(new EventConstructor("input", { bubbles: true }));
+  question.dispatchEvent(new EventConstructor("change", { bubbles: true }));
+  question.focus();
+}
+button.addEventListener("click", () => {
+  if (activeRecognition) {
+    activeRecognition.stop();
+    return;
+  }
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) {
+    status.textContent = "Not supported";
+    return;
+  }
+  const recognition = new SpeechRecognition();
+  activeRecognition = recognition;
+  recognition.lang = navigator.language || "en-US";
+  recognition.interimResults = false;
+  recognition.maxAlternatives = 1;
+  let transcript = "";
+  let error = "";
+  button.classList.add("listening");
+  button.setAttribute("aria-label", "Listening. Click to stop.");
+  status.textContent = "Listening…";
+  recognition.onresult = event => {
+    transcript = event.results?.[0]?.[0]?.transcript || "";
+  };
+  recognition.onerror = event => { error = event.error || "unavailable"; };
+  recognition.onend = () => {
+    button.classList.remove("listening");
+    button.setAttribute("aria-label", "Start voice search");
+    activeRecognition = null;
+    if (transcript) {
+      try {
+        putTranscriptInQuestion(transcript);
+        status.textContent = "Added to question";
+      } catch (_) {
+        status.textContent = "Use a secure browser";
+      }
+    } else {
+      status.textContent = error ? "Check mic access" : "Voice search";
+    }
+  };
+  try { recognition.start(); }
+  catch (_) {
+    button.classList.remove("listening");
+    activeRecognition = null;
+    status.textContent = "Try again";
+  }
+});
+</script>
+</body>
+</html>

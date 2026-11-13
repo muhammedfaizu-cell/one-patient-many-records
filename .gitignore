@@ -1,0 +1,12 @@
+.env
+venv/
+chroma_db/
+patient_accounts.sqlite3
+access_codes.sqlite3
+.streamlit/secrets.toml
+
+# Local patient records and generated data
+documents/
+*.pdf
+*.sqlite3
+__pycache__/
