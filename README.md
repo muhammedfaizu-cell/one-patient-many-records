@@ -50,3 +50,7 @@ Microphone dictation is separate from record search. Speech recognition may be h
 The app stores extracted record text in the local `chroma_db/` folder. Patient accounts and temporary access codes are kept in local SQLite files. Those files, `.env`, and PDF files are excluded from Git by `.gitignore`.
 
 This is a prototype, not a production medical-record system. Before using real patient information in a deployment, add appropriate hosting security, backups, account recovery, audit logging, and privacy/legal review. Do not expose the Streamlit development server directly to the public internet.
+
+## MVP video title card
+
+The 1920 × 1080 opening title card for the project video is available as [`mvp_video_title_card.png`](mvp_video_title_card.png). It uses fictional, illustrative content.
